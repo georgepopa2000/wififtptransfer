@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Wireless FTP Transfer</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="text_but_onoff">On</string>
+    <string name="text_but_on">Start server</string>
+    <string name="text_but_off">Stop server</string>
+    <string name="label_server_address_disabled">WIFI IP</string>
+    <string name="hint_server_address_disabled">This is the address that the FTP Server will bind to when started</string>
+    <string name="text_port_number">2221</string>
+    <string name="label_port_number">Port</string>
+    <string name="hint_port_number">This is the port number that the FTP SErver will bind to</string>
+    <string name="label_username">Username</string>
+    <string name="text_username">guest</string>
+    <string name="label_password">Password</string>
+    <string name="text_password">guest</string>
+    <string name="label_homedir">Homedir</string>
+    <string name="text_homedir">/</string>
+    <string name="button_save_config">Save config</string>
+
+</resources>
