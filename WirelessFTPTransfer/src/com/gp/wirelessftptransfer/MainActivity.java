@@ -15,8 +15,10 @@ import java.nio.ByteOrder;
 import java.util.Properties;
 
 import android.app.Activity;
+import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -27,6 +29,7 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity {
 	FtpServerDetails fsd;
+	PowerManager.WakeLock wl;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -83,6 +86,12 @@ public class MainActivity extends Activity {
 		}
 		
 
+		PowerManager pm = (PowerManager)getSystemService(
+                Context.POWER_SERVICE);
+		wl = pm.newWakeLock(
+            PowerManager.SCREEN_DIM_WAKE_LOCK
+            | PowerManager.ON_AFTER_RELEASE,
+            "frptrans");
 
 
 
@@ -106,6 +115,7 @@ public class MainActivity extends Activity {
 			FTPServerManager fsm = new FTPServerManager();
 			fsd = fsm.configureServer();			
 			fsd.getServer().start();
+			wl.acquire();
 			
 			textv.setText("server online \n" +
 							"host: " +wifiIpAddress()+":"+fsd.getPortnumber()+"\n" +
@@ -114,6 +124,7 @@ public class MainActivity extends Activity {
 		} else {
 			buton.setText(this.getResources().getString(R.string.text_but_on));
 			fsd.getServer().stop();
+			wl.release();
 			textv.setText("server stopped");			
 
 		}		
