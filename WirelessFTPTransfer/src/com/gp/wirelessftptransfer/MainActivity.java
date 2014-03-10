@@ -15,7 +15,11 @@ import java.nio.ByteOrder;
 import java.util.Properties;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -30,6 +34,23 @@ import android.widget.TextView;
 public class MainActivity extends Activity {
 	FtpServerDetails fsd;
 	PowerManager.WakeLock wl;
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		Log.i("dtptrans", "onstop");
+		if (wl.isHeld()) wl.release();
+		if (this.fsd!=null) {
+			try {
+				fsd.getServer().stop();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -100,6 +121,9 @@ public class MainActivity extends Activity {
 		
 	}
 
+	
+	
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
@@ -117,6 +141,8 @@ public class MainActivity extends Activity {
 			fsd.getServer().start();
 			wl.acquire();
 			
+			sendNotification("Wireless FTP Transfer", "FTP Server started");
+			
 			textv.setText("server online \n" +
 							"host: " +wifiIpAddress()+":"+fsd.getPortnumber()+"\n" +
 							"user:"+fsd.getUsername()+" \n" +
@@ -125,6 +151,7 @@ public class MainActivity extends Activity {
 			buton.setText(this.getResources().getString(R.string.text_but_on));
 			fsd.getServer().stop();
 			wl.release();
+			cancelNotification();
 			textv.setText("server stopped");			
 
 		}		
@@ -215,5 +242,64 @@ public class MainActivity extends Activity {
 
 	    return ipAddressString;
 	}
+
+
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if (wl.isHeld()) wl.release();
+		Log.i("dtptrans", "onpause");
+	}
+	
+	public void sendNotification(String messageTitle,String messageText){
+		NotificationManager notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		
+		/*
+		Notification.Builder nb = new Notification.Builder(this);
+		nb.setContentText(messageText);
+		nb.setContentTitle(messageTitle);
+		nb.setSmallIcon(R.drawable.ic_launcher);
+		
+		//*/
+
+		Notification notification = new Notification(R.drawable.ic_launcher, messageTitle, System.currentTimeMillis());
+		
+		
+		
+		Intent notificationIntent = new Intent(this, MainActivity.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
+		
+		notification.setLatestEventInfo(this, messageTitle, messageText, pendingIntent);
+		
+		notMan.notify(13400, notification);
+		
+	
+		
+	}
+	
+	public void cancelNotification(){
+		NotificationManager notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+		notMan.cancel(13400);
+	}
+
+
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		Log.i("dtptrans", "onresume");
+		
+	}
+
+
+
+	@Override
+	protected void onRestart() {
+		super.onRestart();
+		Log.i("dtptrans", "onrestart");
+	}
+	
+	
 
 }
