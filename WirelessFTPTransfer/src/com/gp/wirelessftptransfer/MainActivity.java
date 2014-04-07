@@ -14,6 +14,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteOrder;
 import java.util.Properties;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -38,22 +39,14 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onStop() {
 		super.onStop();
-		Log.i("dtptrans", "onstop");
-		if (wl.isHeld()) wl.release();
-		if (this.fsd!=null) {
-			try {
-				fsd.getServer().stop();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+	
 	}
 	
 	
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
+		super.onCreate(savedInstanceState);		
 		setContentView(R.layout.activity_main);
 		
 		//if (getCurrentFocus()!=null) getCurrentFocus().clearFocus();
@@ -110,7 +103,7 @@ public class MainActivity extends Activity {
 		PowerManager pm = (PowerManager)getSystemService(
                 Context.POWER_SERVICE);
 		wl = pm.newWakeLock(
-            PowerManager.SCREEN_DIM_WAKE_LOCK
+            PowerManager.PARTIAL_WAKE_LOCK
             | PowerManager.ON_AFTER_RELEASE,
             "frptrans");
 
@@ -131,6 +124,7 @@ public class MainActivity extends Activity {
 		return true;
 	}
 	
+	@SuppressLint("Wakelock")
 	private void ftpStartStop() throws Exception{
 		Button buton = (Button) this.findViewById(R.id.butonoff);
 		TextView textv = (TextView) this.findViewById(R.id.textarea_log);
@@ -150,7 +144,7 @@ public class MainActivity extends Activity {
 		} else {
 			buton.setText(this.getResources().getString(R.string.text_but_on));
 			fsd.getServer().stop();
-			wl.release();
+			if (wl.isHeld()) wl.release();	
 			cancelNotification();
 			textv.setText("server stopped");			
 
@@ -204,9 +198,7 @@ public class MainActivity extends Activity {
 		String homedir  = prop.getProperty("homedir", "/");
 		String portnumber = prop.getProperty("portnumber", "2121");
 		
-		Log.i("ftptrans", username);
-		Log.i("ftptrans", password); 
-		
+	
 		EditText txtUsername = (EditText) this.findViewById(R.id.txtUsername);
 		txtUsername.setText(username);
 		
@@ -248,7 +240,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (wl.isHeld()) wl.release();
+		//if (wl.isHeld()) wl.release();
 		Log.i("dtptrans", "onpause");
 	}
 	
@@ -288,16 +280,23 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Log.i("dtptrans", "onresume");
+		Log.i("ftptrans", "onresume");
 		
 	}
 
 
 
+
+	@SuppressLint("Wakelock")
 	@Override
-	protected void onRestart() {
-		super.onRestart();
-		Log.i("dtptrans", "onrestart");
+	protected void onDestroy() {
+		super.onDestroy();
+		Log.i("ftptrans", "ondestroy");
+		if (wl.isHeld()) wl.release();	
+		if (this.fsd!=null){
+			if (!this.fsd.getServer().isStopped()) this.fsd.getServer().stop();
+		}
+		cancelNotification();
 	}
 	
 	
