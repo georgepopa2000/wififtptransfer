@@ -1,13 +1,9 @@
 package com.gp.wirelessftptransfer;
 
 import java.io.File;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -15,49 +11,35 @@ import java.nio.ByteOrder;
 import java.util.Properties;
 
 import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.text.InputType;
 import android.util.Log;
-import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
-	FtpServerDetails fsd;
-	PowerManager.WakeLock wl;
 
-	@Override
-	protected void onStop() {
-		super.onStop();
-		Log.i("dtptrans", "onstop");
-		if (wl.isHeld()) wl.release();
-		if (this.fsd!=null) {
-			try {
-				fsd.getServer().stop();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	
+	public static final String PREFS_NAME ="prefs wireless ftp server";
+	public static final String PREFS_USERNAME = "username";
+	public static final String PREFS_PASSWORD = "password";
+	public static final String PREFS_HOMEDIR = "homedir";
+	public static final String PREFS_PORT = "port";
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		//if (getCurrentFocus()!=null) getCurrentFocus().clearFocus();
-
 		Button buton = (Button) this.findViewById(R.id.butonoff);
 		
 		buton.setOnClickListener(new View.OnClickListener() {
@@ -84,74 +66,72 @@ public class MainActivity extends Activity {
 		EditText txtAddress = (EditText) this.findViewById(R.id.txtWIFIAddress);
 		txtAddress.setInputType(InputType.TYPE_NULL);
 		
-		File configFile = new File("/mnt/sdcard/WirelessFTPTransfer/config.properties");
-		if (!configFile.exists()){
-			File configFolder = new File("/mnt/sdcard/WirelessFTPTransfer/");
-			configFolder.mkdirs();
-			PrintWriter writer;
-			try {
-				writer = new PrintWriter("/mnt/sdcard/WirelessFTPTransfer/config.properties", "UTF-8");
-				writer.println();
-				writer.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		try {
-			populateFields();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		populateFields();
 		
 
+		/*
 		PowerManager pm = (PowerManager)getSystemService(
                 Context.POWER_SERVICE);
 		wl = pm.newWakeLock(
             PowerManager.SCREEN_DIM_WAKE_LOCK
             | PowerManager.ON_AFTER_RELEASE,
             "frptrans");
+//*/
 
 
-
-		TextView textv = (TextView) this.findViewById(R.id.textarea_log);
-		textv.setText("server stopped");		
+		
 		
 	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		TextView textv = (TextView) this.findViewById(R.id.textarea_log);
+		Button buton = (Button) this.findViewById(R.id.butonoff);
+		if (this.getIntent().getBooleanExtra(WirelessFtpService.KEY_INTENT_STARTED,false)){
+			buton.setText(this.getResources().getString(R.string.text_but_off));
+			textv.setText("server online \n" +
+					"host: " +wifiIpAddress()+":"+getIntent().getStringExtra(WirelessFtpService.KEY_INTENT_PORT)+"\n" +
+					"user:"+getIntent().getStringExtra(WirelessFtpService.KEY_INTENT_USERNAME)+" \n" +
+					"pass:"+getIntent().getStringExtra(WirelessFtpService.KEY_INTENT_PASSWORD));
+		} if (isMyServiceRunning()){
+			buton.setText(this.getResources().getString(R.string.text_but_off));
+			SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+			
+			textv.setText("server online \n" +
+					"host: " +wifiIpAddress()+":"+Integer.toString(prefs.getInt(PREFS_PORT, 2121))+"\n" +
+					"user:"+prefs.getString(PREFS_USERNAME, "guest")+" \n" +
+					"pass:"+prefs.getString(PREFS_PASSWORD, "guest"));			
+		} else {
+		
+			textv.setText("server stopped");
+			buton.setText(this.getResources().getString(R.string.text_but_on));
+		}
+	}
 
 	
 	
 	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
-		return true;
-	}
-	
+
 	private void ftpStartStop() throws Exception{
 		Button buton = (Button) this.findViewById(R.id.butonoff);
 		TextView textv = (TextView) this.findViewById(R.id.textarea_log);
 		if (buton.getText().equals(this.getResources().getString(R.string.text_but_on))){
 			buton.setText(this.getResources().getString(R.string.text_but_off));
-			FTPServerManager fsm = new FTPServerManager();
-			fsd = fsm.configureServer();			
-			fsd.getServer().start();
-			wl.acquire();
 			
-			sendNotification("Wireless FTP Transfer", "FTP Server started");
+			Intent tint = new Intent(this,WirelessFtpService.class);
+			startService(tint);
+			SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
 			
 			textv.setText("server online \n" +
-							"host: " +wifiIpAddress()+":"+fsd.getPortnumber()+"\n" +
-							"user:"+fsd.getUsername()+" \n" +
-							"pass:"+fsd.getPassword());
+					"host: " +wifiIpAddress()+":"+Integer.toString(prefs.getInt(PREFS_PORT, 2121))+"\n" +
+					"user:"+prefs.getString(PREFS_USERNAME, "guest")+" \n" +
+					"pass:"+prefs.getString(PREFS_PASSWORD, "guest"));
 		} else {
 			buton.setText(this.getResources().getString(R.string.text_but_on));
-			fsd.getServer().stop();
-			wl.release();
-			cancelNotification();
+			Intent tint = new Intent(this,WirelessFtpService.class);
+			stopService(tint);
+
 			textv.setText("server stopped");			
 
 		}		
@@ -167,42 +147,39 @@ public class MainActivity extends Activity {
 			e.printStackTrace();
 		}
 		
+		SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+		Editor edit = prefs.edit();
+		
 		
 	
 		
 		
 		EditText txtUsername = (EditText) this.findViewById(R.id.txtUsername);
-		prop.setProperty("username", txtUsername.getText().toString());
+		edit.putString(PREFS_USERNAME, txtUsername.getText().toString());
 		
 		EditText txtPassword = (EditText) this.findViewById(R.id.txtPassword);
-		prop.setProperty("password", txtPassword.getText().toString());
+		edit.putString(PREFS_PASSWORD, txtPassword.getText().toString());
 		
 		EditText txtHomedir = (EditText) this.findViewById(R.id.txtHomedir);
-		prop.setProperty("homedir", txtHomedir.getText().toString());
+		edit.putString(PREFS_HOMEDIR, txtHomedir.getText().toString());
 		
 		EditText txtPort = (EditText) this.findViewById(R.id.txtPort);
-		prop.setProperty("portnumber", txtPort.getText().toString());
+		edit.putInt(PREFS_PORT,Integer.valueOf(txtPort.getText().toString()));
 		
-		try {
-			prop.store(new FileOutputStream(new File("/mnt/sdcard/WirelessFTPTransfer/config.properties")), "Config file for WirelessFTPTransfer app");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
+		edit.commit();		
 	}
 	
-	private void populateFields() throws FileNotFoundException, IOException{
+	private void populateFields() {
 		EditText txtServerAddress = (EditText) this.findViewById(R.id.txtWIFIAddress);
 		txtServerAddress.setText(wifiIpAddress());
-		Properties prop = new Properties();
-		prop.load(new FileInputStream(new File("/mnt/sdcard/WirelessFTPTransfer/config.properties")));
 		
-		String username = prop.getProperty("username", "guest");
-		String password = prop.getProperty("password", "guest");
-		String homedir  = prop.getProperty("homedir", "/");
-		String portnumber = prop.getProperty("portnumber", "2121");
+		SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+		
+		
+		String username = prefs.getString(PREFS_USERNAME, "guest");
+		String password = prefs.getString(PREFS_PASSWORD, "guest");
+		String homedir  = prefs.getString(PREFS_HOMEDIR, "/");
+		String portnumber = Integer.toString(prefs.getInt(PREFS_PORT, 2121));
 		
 		Log.i("ftptrans", username);
 		Log.i("ftptrans", password); 
@@ -242,64 +219,18 @@ public class MainActivity extends Activity {
 
 	    return ipAddressString;
 	}
-
-
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-		if (wl.isHeld()) wl.release();
-		Log.i("dtptrans", "onpause");
-	}
 	
-	public void sendNotification(String messageTitle,String messageText){
-		NotificationManager notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		
-		/*
-		Notification.Builder nb = new Notification.Builder(this);
-		nb.setContentText(messageText);
-		nb.setContentTitle(messageTitle);
-		nb.setSmallIcon(R.drawable.ic_launcher);
-		
-		//*/
-
-		Notification notification = new Notification(R.drawable.ic_launcher, messageTitle, System.currentTimeMillis());
-		
-		
-		
-		Intent notificationIntent = new Intent(this, MainActivity.class);
-		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
-		
-		notification.setLatestEventInfo(this, messageTitle, messageText, pendingIntent);
-		
-		notMan.notify(13400, notification);
-		
-	
-		
-	}
-	
-	public void cancelNotification(){
-		NotificationManager notMan = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-		notMan.cancel(13400);
-	}
+	private boolean isMyServiceRunning() {
+	    ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+	    for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+	        if (WirelessFtpService.class.getName().equals(service.service.getClassName())) {
+	            return true;
+	        }
+	    }
+	    return false;
+	}	
 
 
 
-	@Override
-	protected void onResume() {
-		super.onResume();
-		Log.i("dtptrans", "onresume");
-		
-	}
-
-
-
-	@Override
-	protected void onRestart() {
-		super.onRestart();
-		Log.i("dtptrans", "onrestart");
-	}
-	
-	
 
 }

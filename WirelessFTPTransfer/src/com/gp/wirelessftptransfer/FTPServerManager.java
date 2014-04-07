@@ -1,12 +1,7 @@
 package com.gp.wirelessftptransfer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.Authority;
@@ -19,37 +14,31 @@ import org.apache.ftpserver.usermanager.impl.ConcurrentLoginPermission;
 import org.apache.ftpserver.usermanager.impl.WritePermission;
 import org.apache.ftpserver.util.EncryptUtils;
 
-import android.util.Log;
+import android.content.SharedPreferences;
 
 public class FTPServerManager {
+	
+	SharedPreferences prefs = null;
+	
+	
+	
+	public FTPServerManager(SharedPreferences prefs) {
+		super();
+		this.prefs = prefs;
+	}
+
+
+
 	public FtpServerDetails configureServer(){
-		Properties prop = new Properties();
-		try {
-			prop.load(new FileInputStream(new File("/mnt/sdcard/WirelessFTPTransfer/config.properties")));
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 		
-		String username = prop.getProperty("username", "guest");
-		String password = prop.getProperty("password", "guest");
-		String homedir  = prop.getProperty("homedir", "/");
-		int portnumber = 2121;		
+		
+		String username = prefs.getString(MainActivity.PREFS_USERNAME, "guest");
+		String password = prefs.getString(MainActivity.PREFS_PASSWORD, "guest");
+		String homedir  = prefs.getString(MainActivity.PREFS_HOMEDIR, "/");
+		int portnumber = prefs.getInt(MainActivity.PREFS_PORT, 2121);
 		
 		
 		
-		try {
-			portnumber = Integer.parseInt(prop.getProperty("portnumber", "2121"));
-		} catch (NumberFormatException e1) {
-			e1.printStackTrace();
-		}
-		Log.i("ftptrans", "username="+username);
-		Log.i("ftptrans", "password="+password);
-		Log.i("ftptrans", "homedir="+homedir);
-		Log.i("ftptrans", "portnumber="+portnumber);
 		
         UserFactory userFact = new UserFactory();
         userFact.setName(username);
