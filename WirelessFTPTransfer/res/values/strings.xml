@@ -19,5 +19,6 @@
     <string name="label_homedir">Homedir</string>
     <string name="text_homedir">/</string>
     <string name="button_save_config">Save config</string>
+    <string name="but_settings">Settings</string>
 
 </resources>

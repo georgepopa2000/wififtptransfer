@@ -33,6 +33,7 @@ public class MainActivity extends Activity {
 	public static final String PREFS_PASSWORD = "password";
 	public static final String PREFS_HOMEDIR = "homedir";
 	public static final String PREFS_PORT = "port";
+	public static final String PREFS_ALLOW_ANY = "anylogin";
 
 
 	@Override
@@ -62,6 +63,16 @@ public class MainActivity extends Activity {
 				saveConfig();
 			}
 		});
+		
+		Button butSettings = (Button) this.findViewById(R.id.butSettings);
+		butSettings.setOnClickListener(new View.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent i = new Intent(MainActivity.this, SettingsActivity.class);
+				startActivity(i);
+			}
+		});		
 		
 		EditText txtAddress = (EditText) this.findViewById(R.id.txtWIFIAddress);
 		txtAddress.setInputType(InputType.TYPE_NULL);

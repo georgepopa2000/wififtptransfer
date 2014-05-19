@@ -35,6 +35,22 @@
             android:enabled="true"
             android:exported="false" >
         </service>
+
+        <activity
+            android:name="com.gp.wirelessftptransfer.PreferencesActivity"
+            android:label="@string/title_activity_preferences" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.gp.wirelessftptransfer.MainActivity" />
+        </activity>
+        
+        <activity
+            android:name="com.gp.wirelessftptransfer.SettingsActivity"
+            android:label="@string/title_activity_preferences" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.gp.wirelessftptransfer.MainActivity" />
+        </activity>        
     </application>
 
 </manifest>

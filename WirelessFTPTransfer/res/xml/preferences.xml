@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    <CheckBoxPreference android:key="anonymouslogin" android:title="Allow any login" android:summaryOn="can use any login to connect to ftp" android:summaryOff="use the selected username and password" android:disableDependentsState="false"/>
+    <EditTextPreference android:key="username" android:title="Username" android:dependency="anonymouslogin" />
+    <EditTextPreference android:key="password" android:title="Password" android:dependency="anonymouslogin" />
+    <EditTextPreference android:key="homedir" android:title="Home dir" />
+    <EditTextPreference android:key="port" android:title="Port" android:inputType="numberDecimal"/>    
+</PreferenceScreen>
