@@ -1,5 +1,7 @@
 package com.gp.wirelessftptransfer;
 
+import net.rdrei.android.dirchooser.DirectoryChooserActivity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.os.Bundle;
@@ -9,6 +11,8 @@ import android.preference.Preference;
 import android.preference.PreferenceActivity;
 
 public class SettingsActivity extends PreferenceActivity {
+	
+	public final int REQUEST_DIRECTORY = 1234;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -77,19 +81,37 @@ public class SettingsActivity extends PreferenceActivity {
 			}
 		});					
 		
-		EditTextPreference txtHomedir = (EditTextPreference) findPreference("homedir");
-		String homedir = prefs.getString(MainActivity.PREFS_HOMEDIR, "/");
-		txtHomedir.setText(homedir);	
-		txtHomedir.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+		
+		final String homedir = prefs.getString(MainActivity.PREFS_HOMEDIR, "/");
+		
+		
+		Preference txtHomedir = findPreference("homedir");
+		txtHomedir.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			
 			@Override
-			public boolean onPreferenceChange(Preference preference, Object newValue) {				
-				prefeditor.putString(MainActivity.PREFS_HOMEDIR, (String) newValue);
-				prefeditor.apply();
+			public boolean onPreferenceClick(Preference preference) {
+				final Intent chooserIntent = new Intent(SettingsActivity.this, DirectoryChooserActivity.class);
+				chooserIntent.putExtra(DirectoryChooserActivity.EXTRA_INITIAL_DIRECTORY, homedir);
+
+				// REQUEST_DIRECTORY is a constant integer to identify the request, e.g. 0
+				startActivityForResult(chooserIntent, REQUEST_DIRECTORY);				
 				return true;
 			}
-		});				
+		});
 
+	}
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		SharedPreferences prefs = getSharedPreferences(MainActivity.PREFS_NAME, MODE_PRIVATE);
+		final Editor prefeditor = prefs.edit();		
+		if (requestCode == REQUEST_DIRECTORY){
+			if (resultCode ==DirectoryChooserActivity.RESULT_CODE_DIR_SELECTED){				
+				prefeditor.putString(MainActivity.PREFS_HOMEDIR, data.getStringExtra(DirectoryChooserActivity.RESULT_SELECTED_DIR));
+				prefeditor.apply();				
+			}
+		}
+		super.onActivityResult(requestCode, resultCode, data);
 	}
 	
 }

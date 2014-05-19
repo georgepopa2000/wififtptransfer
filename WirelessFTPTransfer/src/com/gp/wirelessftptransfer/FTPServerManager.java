@@ -34,7 +34,7 @@ public class FTPServerManager {
 		
 		String username = prefs.getString(MainActivity.PREFS_USERNAME, "guest");
 		String password = prefs.getString(MainActivity.PREFS_PASSWORD, "guest");
-		String homedir  = prefs.getString(MainActivity.PREFS_HOMEDIR, "/");
+		String homedir  = prefs.getString(MainActivity.PREFS_HOMEDIR, MainActivity.DEFAULT_HOME_DIR);
 		boolean allowany = prefs.getBoolean(MainActivity.PREFS_ALLOW_ANY, true);
 		int portnumber = prefs.getInt(MainActivity.PREFS_PORT, 2121);
 		

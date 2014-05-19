@@ -1,24 +1,21 @@
 package com.gp.wirelessftptransfer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteOrder;
-import java.util.Properties;
 
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningServiceInfo;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
@@ -37,6 +34,8 @@ public class MainActivity extends Activity {
 	public static final String PREFS_PORT = "port";
 	public static final String PREFS_ALLOW_ANY = "anylogin";
 	
+	public static final String DEFAULT_HOME_DIR = Environment.getExternalStorageDirectory().getAbsolutePath();
+	
 	public static final int  REQUEST_CODE_SETTINGS = 1977;
 
 
@@ -44,7 +43,7 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		
+
 		Button buton = (Button) this.findViewById(R.id.butonoff);
 		
 		buton.setOnClickListener(new View.OnClickListener() {
@@ -74,18 +73,6 @@ public class MainActivity extends Activity {
 		populateFields();
 		
 
-		/*
-		PowerManager pm = (PowerManager)getSystemService(
-                Context.POWER_SERVICE);
-		wl = pm.newWakeLock(
-            PowerManager.SCREEN_DIM_WAKE_LOCK
-            | PowerManager.ON_AFTER_RELEASE,
-            "frptrans");
-//*/
-
-
-		
-		
 	}
 	
 	@Override
@@ -97,32 +84,28 @@ public class MainActivity extends Activity {
 		Button buton = (Button) this.findViewById(R.id.butonoff);
 		if (this.getIntent().getBooleanExtra(WirelessFtpService.KEY_INTENT_STARTED,false)){
 			buton.setText(this.getResources().getString(R.string.text_but_off));
-			textServ.setText("server online");
+			textServ.setText("FTP Server is running");
 		} if (isMyServiceRunning()){
 			buton.setText(this.getResources().getString(R.string.text_but_off));
-			textServ.setText("server online");
-			
-			
-	
+			textServ.setText("FTP Server is running");
 		} else {
-			textServ.setText("server stopped");			
+			textServ.setText("FTP Server is stopped");			
 			buton.setText(this.getResources().getString(R.string.text_but_on));
 		}
 	}
 	
 	private void showSettings(){
 		Intent i = new Intent(MainActivity.this, SettingsActivity.class);
-		//startActivity(i);
 		startActivityForResult(i, REQUEST_CODE_SETTINGS);
 	}
 	
 	
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (requestCode == REQUEST_CODE_SETTINGS){
-			populateFields();
+		if (requestCode == REQUEST_CODE_SETTINGS){//return from settings activity
+			populateFields(); //show new preferences
 			if (isMyServiceRunning()){
-				startFTPService();
+				startFTPService(); //if the server service is started restart the service
 			}
 		}
 		super.onActivityResult(requestCode, resultCode, data);
@@ -148,22 +131,46 @@ public class MainActivity extends Activity {
 
 	private void ftpStartStop() throws Exception{
 		Button buton = (Button) this.findViewById(R.id.butonoff);
-		TextView textv = (TextView) this.findViewById(R.id.textarea_log);
+		TextView textv = (TextView) this.findViewById(R.id.textServerOnOff);
 		if (buton.getText().equals(this.getResources().getString(R.string.text_but_on))){
+			if (wifiIpAddress()==null){
+				AlertDialog.Builder builder = new AlertDialog.Builder(this);
+				builder.setMessage("Device not connected to a Wireless Network")
+				.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+					
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				})
+				.setCancelable(true);
+				AlertDialog ad = builder.create();
+				ad.show();
+				return;
+			}
 			buton.setText(this.getResources().getString(R.string.text_but_off));
 			startFTPService();
+			textv.setText("FTP Server is running");
 
 		} else {
 			buton.setText(this.getResources().getString(R.string.text_but_on));
-			Intent tint = new Intent(this,WirelessFtpService.class);
-			stopService(tint);
-
-			textv.setText("server stopped");			
+			stopFTPService();
+			textv.setText("FTP Server is stopped");			
 
 		}		
 	}
 	
+	
+	private void stopFTPService(){
+		Intent tint = new Intent(this,WirelessFtpService.class);
+		stopService(tint);		
+	}
+	
 	private void startFTPService(){
+		
+		if (isMyServiceRunning()){
+			stopFTPService();
+		}
 		Intent tint = new Intent(this,WirelessFtpService.class);
 		startService(tint);		
 	}
@@ -184,8 +191,14 @@ public class MainActivity extends Activity {
 			credentialsText ="user:"+prefs.getString(PREFS_USERNAME, "guest")+" \n" +
 					"pass:"+prefs.getString(PREFS_PASSWORD, "guest");
 		}
-		textv.setText("host: " +wifiIpAddress()+":"+Integer.toString(prefs.getInt(PREFS_PORT, 2121))+"\n" +
-				credentialsText);		
+		
+		String wifihost = wifiIpAddress();;
+		if (wifihost==null) wifihost="WIFI Network not connected";
+		else wifihost = wifihost+":"+Integer.toString(prefs.getInt(PREFS_PORT, 2121)); 
+		
+		textv.setText("host: "+wifihost +"\n" +
+				credentialsText+"\n"+
+				"Home dir:"+prefs.getString(PREFS_HOMEDIR, MainActivity.DEFAULT_HOME_DIR));		
 	}
 	
 	protected String wifiIpAddress() {
