@@ -21,10 +21,19 @@ public class OTFUserManager implements UserManager{
 			UsernamePasswordAuthentication upauth = (UsernamePasswordAuthentication) authentication;
 			String pass = upauth.getPassword();
 			String username = upauth.getUsername();
+			try {
+				if (doesExist("allowanyusername")) {//hack to allow any login details
+					User u = getUserByName("allowanyusername");
+				    return u;
+				}
+			} catch (FtpException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 			
-            if (username == null) {
-                throw new AuthenticationFailedException("Authentication failed");
-            }
+		    if (username == null) {
+		        throw new AuthenticationFailedException("Authentication failed");
+		    }
 
             if (pass == null) {
                 pass = "";

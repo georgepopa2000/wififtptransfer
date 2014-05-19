@@ -21,6 +21,8 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -34,6 +36,8 @@ public class MainActivity extends Activity {
 	public static final String PREFS_HOMEDIR = "homedir";
 	public static final String PREFS_PORT = "port";
 	public static final String PREFS_ALLOW_ANY = "anylogin";
+	
+	public static final int  REQUEST_CODE_SETTINGS = 1977;
 
 
 	@Override
@@ -55,22 +59,12 @@ public class MainActivity extends Activity {
 			}
 		});
 		
-		Button butSave = (Button) this.findViewById(R.id.butSaveConfig);
-		butSave.setOnClickListener(new View.OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				saveConfig();
-			}
-		});
-		
 		Button butSettings = (Button) this.findViewById(R.id.butSettings);
 		butSettings.setOnClickListener(new View.OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				Intent i = new Intent(MainActivity.this, SettingsActivity.class);
-				startActivity(i);
+				showSettings();
 			}
 		});		
 		
@@ -97,29 +91,57 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		TextView textv = (TextView) this.findViewById(R.id.textarea_log);
+		populateFields();
+		TextView textServ = (TextView) this.findViewById(R.id.textServerOnOff);		
+				
 		Button buton = (Button) this.findViewById(R.id.butonoff);
 		if (this.getIntent().getBooleanExtra(WirelessFtpService.KEY_INTENT_STARTED,false)){
 			buton.setText(this.getResources().getString(R.string.text_but_off));
-			textv.setText("server online \n" +
-					"host: " +wifiIpAddress()+":"+getIntent().getStringExtra(WirelessFtpService.KEY_INTENT_PORT)+"\n" +
-					"user:"+getIntent().getStringExtra(WirelessFtpService.KEY_INTENT_USERNAME)+" \n" +
-					"pass:"+getIntent().getStringExtra(WirelessFtpService.KEY_INTENT_PASSWORD));
+			textServ.setText("server online");
 		} if (isMyServiceRunning()){
 			buton.setText(this.getResources().getString(R.string.text_but_off));
-			SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
+			textServ.setText("server online");
 			
-			textv.setText("server online \n" +
-					"host: " +wifiIpAddress()+":"+Integer.toString(prefs.getInt(PREFS_PORT, 2121))+"\n" +
-					"user:"+prefs.getString(PREFS_USERNAME, "guest")+" \n" +
-					"pass:"+prefs.getString(PREFS_PASSWORD, "guest"));			
+			
+	
 		} else {
-		
-			textv.setText("server stopped");
+			textServ.setText("server stopped");			
 			buton.setText(this.getResources().getString(R.string.text_but_on));
 		}
 	}
+	
+	private void showSettings(){
+		Intent i = new Intent(MainActivity.this, SettingsActivity.class);
+		//startActivity(i);
+		startActivityForResult(i, REQUEST_CODE_SETTINGS);
+	}
+	
+	
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == REQUEST_CODE_SETTINGS){
+			populateFields();
+			if (isMyServiceRunning()){
+				startFTPService();
+			}
+		}
+		super.onActivityResult(requestCode, resultCode, data);
+	}
 
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		getMenuInflater().inflate(R.menu.main, menu);
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onMenuItemSelected(int featureId, MenuItem item) {
+		if (item.getItemId() == R.id.action_settings){
+			showSettings();
+		}
+		return super.onMenuItemSelected(featureId, item);
+	}
 	
 	
 	
@@ -129,15 +151,8 @@ public class MainActivity extends Activity {
 		TextView textv = (TextView) this.findViewById(R.id.textarea_log);
 		if (buton.getText().equals(this.getResources().getString(R.string.text_but_on))){
 			buton.setText(this.getResources().getString(R.string.text_but_off));
-			
-			Intent tint = new Intent(this,WirelessFtpService.class);
-			startService(tint);
-			SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-			
-			textv.setText("server online \n" +
-					"host: " +wifiIpAddress()+":"+Integer.toString(prefs.getInt(PREFS_PORT, 2121))+"\n" +
-					"user:"+prefs.getString(PREFS_USERNAME, "guest")+" \n" +
-					"pass:"+prefs.getString(PREFS_PASSWORD, "guest"));
+			startFTPService();
+
 		} else {
 			buton.setText(this.getResources().getString(R.string.text_but_on));
 			Intent tint = new Intent(this,WirelessFtpService.class);
@@ -148,65 +163,29 @@ public class MainActivity extends Activity {
 		}		
 	}
 	
-	private void saveConfig(){
-		Properties prop = new Properties();
-		try {
-			prop.load(new FileInputStream(new File("/mnt/sdcard/WirelessFTPTransfer/config.properties")));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		
-		SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-		Editor edit = prefs.edit();
-		
-		
-	
-		
-		
-		EditText txtUsername = (EditText) this.findViewById(R.id.txtUsername);
-		edit.putString(PREFS_USERNAME, txtUsername.getText().toString());
-		
-		EditText txtPassword = (EditText) this.findViewById(R.id.txtPassword);
-		edit.putString(PREFS_PASSWORD, txtPassword.getText().toString());
-		
-		EditText txtHomedir = (EditText) this.findViewById(R.id.txtHomedir);
-		edit.putString(PREFS_HOMEDIR, txtHomedir.getText().toString());
-		
-		EditText txtPort = (EditText) this.findViewById(R.id.txtPort);
-		edit.putInt(PREFS_PORT,Integer.valueOf(txtPort.getText().toString()));
-		
-		edit.commit();		
+	private void startFTPService(){
+		Intent tint = new Intent(this,WirelessFtpService.class);
+		startService(tint);		
 	}
 	
 	private void populateFields() {
+		String wifiaddress = wifiIpAddress();
+		if (wifiaddress==null) wifiaddress="WIFI Network not connected"; 
 		EditText txtServerAddress = (EditText) this.findViewById(R.id.txtWIFIAddress);
 		txtServerAddress.setText(wifiIpAddress());
 		
+		TextView textv = (TextView) this.findViewById(R.id.textarea_log);
+
 		SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-		
-		
-		String username = prefs.getString(PREFS_USERNAME, "guest");
-		String password = prefs.getString(PREFS_PASSWORD, "guest");
-		String homedir  = prefs.getString(PREFS_HOMEDIR, "/");
-		String portnumber = Integer.toString(prefs.getInt(PREFS_PORT, 2121));
-		
-		Log.i("ftptrans", username);
-		Log.i("ftptrans", password); 
-		
-		EditText txtUsername = (EditText) this.findViewById(R.id.txtUsername);
-		txtUsername.setText(username);
-		
-		EditText txtPassword = (EditText) this.findViewById(R.id.txtPassword);
-		txtPassword.setText(password);
-		
-		EditText txtHomedir = (EditText) this.findViewById(R.id.txtHomedir);
-		txtHomedir.setText(homedir);
-		
-		EditText txtPort = (EditText) this.findViewById(R.id.txtPort);
-		txtPort.setText(portnumber);
-		
+		String credentialsText = "";
+		if (prefs.getBoolean(PREFS_ALLOW_ANY, true)){			
+			credentialsText = "Use any credentials for login";
+		} else {
+			credentialsText ="user:"+prefs.getString(PREFS_USERNAME, "guest")+" \n" +
+					"pass:"+prefs.getString(PREFS_PASSWORD, "guest");
+		}
+		textv.setText("host: " +wifiIpAddress()+":"+Integer.toString(prefs.getInt(PREFS_PORT, 2121))+"\n" +
+				credentialsText);		
 	}
 	
 	protected String wifiIpAddress() {

@@ -7,6 +7,7 @@ public class FtpServerDetails {
 	String password;
 	String homedir;
 	String portnumber;
+	boolean allowany;
 	FtpServer server;
 	
 	public String getUsername() {
@@ -39,14 +40,24 @@ public class FtpServerDetails {
 	public void setServer(FtpServer server) {
 		this.server = server;
 	}
+	
+	
 	public FtpServerDetails(String username, String password, String homedir,
-			String portnumber, FtpServer server) {
+			String portnumber, boolean allowany,FtpServer server) {
 		super();
 		this.username = username;
 		this.password = password;
 		this.homedir = homedir;
 		this.portnumber = portnumber;
+		this.allowany = allowany;
 		this.server = server;
+	}
+	
+	public boolean isAllowany() {
+		return allowany;
+	}
+	public void setAllowany(boolean allowany) {
+		this.allowany = allowany;
 	}
 	
 	

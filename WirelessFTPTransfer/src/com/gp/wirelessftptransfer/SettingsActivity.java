@@ -24,7 +24,7 @@ public class SettingsActivity extends PreferenceActivity {
 				
 		CheckBoxPreference chkAnonymous = (CheckBoxPreference) findPreference("anonymouslogin");
 		boolean checked = prefs.getBoolean(MainActivity.PREFS_ALLOW_ANY, true);
-		chkAnonymous.setEnabled(checked);
+		chkAnonymous.setChecked(checked);		
 		
 		chkAnonymous.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 			

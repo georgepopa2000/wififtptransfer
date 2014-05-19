@@ -29,117 +29,43 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/textServerOnOff"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size" />
+
+        <TextView
             android:id="@+id/textarea_log"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/padd_vertical_top"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
+            android:text="aaa"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textSize="@dimen/text_size" />
 
-        <TableLayout
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
 
-            <TableRow
-                android:id="@+id/tableRow1"
+            <TextView
+                android:id="@+id/lblWIFIAddress"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content"
+                android:text="@string/label_server_address_disabled" />
 
-                <TextView
-                    android:id="@+id/lblWIFIAddress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_server_address_disabled" />
-
-                <EditText
-                    android:id="@+id/txtWIFIAddress"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:enabled="false"
-                    android:hint="@string/hint_server_address_disabled"
-                    android:inputType="text" />
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/tableRow2"
+            <EditText
+                android:id="@+id/txtWIFIAddress"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ems="10"
+                android:enabled="false"
+                android:hint="@string/hint_server_address_disabled"
+                android:inputType="text" >
 
-                <TextView
-                    android:id="@+id/labelPort"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_port_number" />
-
-                <EditText
-                    android:id="@+id/txtPort"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:inputType="numberDecimal"
-                    android:text="@string/text_port_number" />
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/tableRow3"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
-
-                <TextView
-                    android:id="@+id/lblUsername"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_username" />
-
-                <EditText
-                    android:id="@+id/txtUsername"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:inputType="text"
-                    android:text="@string/text_username" />
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/tableRow4"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" >
-
-                <TextView
-                    android:id="@+id/lblPassword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_password" />
-
-                <EditText
-                    android:id="@+id/txtPassword"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:inputType="textVisiblePassword"
-                    android:text="@string/text_password" />
-            </TableRow>
-
-            <TableRow
-                android:id="@+id/tableRow5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" >
-
-                <TextView
-                    android:id="@+id/lblHomedir"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/label_homedir" />
-
-                <EditText
-                    android:id="@+id/txtHomedir"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:ems="10"
-                    android:inputType="text"
-                    android:text="@string/text_homedir" />
-            </TableRow>
-        </TableLayout>
+                <requestFocus />
+            </EditText>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -148,18 +74,10 @@
             android:orientation="vertical" >
 
             <Button
-                android:id="@+id/butSaveConfig"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:text="@string/button_save_config" />
-
-            <Button
                 android:id="@+id/butSettings"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/but_settings" />
-
         </LinearLayout>
     </LinearLayout>
 
